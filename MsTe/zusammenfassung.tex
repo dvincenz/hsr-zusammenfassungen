@@ -41,8 +41,14 @@
 
 \subsection{Lamdas}
 \begin{itemize}
+	\item Lamdas sind anonyme lokale Funktionen welche auch als Argument oder Rückgabewert von Funktionen verwendet werden können.
 	\item Lamdas werden in \lstinline|Func<[param_type], [return _type]> myLamda;| gespeichert, wobei der letzte Typ in den spitzen Klammern der Rückgabe Typ ist.
 \end{itemize}
+
+\begin{lstlisting}
+//verschachtelte Lamda
+Func<int,Func<int,string>> curry = a => b => (a + b).ToString();
+\end{lstlisting}
 
 \subsection{Delegates, Events}
 \begin{itemize}
@@ -2835,9 +2841,12 @@ using (TransactionScope ts = new TransactionScope()) {
 \section{Reflection}
 Unter Reflection versteht man die Analyse von Metadaten eines Objekts zur Laufzeit. Mit Reflection lassen sich Typen suchen und instanzieren. Die abstrakte Basisklasse \lstinline|System.Type| representiert einen Typen. \lstinline|System.RuntimeType| erbt von \lstinline|System.Type|. Mit Reflection können auch \lstinline|private| Felder gelesen und geschreiben werden.
 
+Grosser \textbf{Nachteil} von der Verwendung von Reflection ist, dass der Compiler nicht alle Type-Checks machen kann. Beispielsweise wird per Reflection eine Library geladen so wird erst bei Laufzeit einen Fehler geworfen sollte auf eine nicht existierende Methode oder Property zugegriffen werden. Weiter ist die Performance Einbussen von Reflection nicht zu vernachlässigen. Besonders, wenn die Reflection-Analyse in verschachtelte Schleifen immer wieder aufgerufen wird.
+
 \begin{lstlisting}[caption=Reflection]
 this.GetType() // implemented on object
 typeof(MyClass) || typeof(int)
+assbly.GetType("TheNamespace.TheClass") //get known class type
 \end{lstlisting}
 
 \subsection{Type Discovery}
@@ -2971,6 +2980,52 @@ object[] aiAll = type.GetCustomAttributes(true);
 
 // Check Definition
 bool aiDef = type.IsDefined(typeof(BugfixAttribute));
+\end{lstlisting}
+
+\subsection{Instanz von Klasse erstellen}
+Mit Reflection kann eine Library geladen werden und daraus auch gerade eine Instanz erstellt werden. Folgend einen Beispiel.
+\begin{lstlisting}
+var ass=Assembly.LoadFrom("Tiere.dll"); 
+var t = ass.GetType("Tiere.Katze"); 
+//Create Instance from Class t using default constructor with one string paramter
+var k=Activator.CreateInstance(t, new object[] {"Mitzi"}); 
+var m = t.GetMethod("MausFangen"); 
+//Invoke method MausFangen with no arguments => Invoke expects array with arguments
+m.Invoke(k, new object[]{});
+\end{lstlisting}
+
+\subsection{Praktisches Beispiel für den Einsatz von Reflection}
+Im Folgendem Beispiel wird mittels Reflection einen OR Mapper erstellt. Dabei werden Attribute vom Model gelesen und einen hier nicht genauer erläuterten  \lstinline|CommandObject| erstellt.
+\begin{lstlisting}
+public static ObjectCommand ToObjectCommand<T>(this T viewModel, RelatedObjectRequesterAction relatedObjectRequesterAction = null)
+{
+   var command = new ObjectCommand(); 
+   Type type = typeof(T);
+   PropertyInfo[] allProperties = type.GetProperties();
+   foreach (var property in allProperties)
+   {
+     if (property.GetValue(viewModel, null) == null) continue;
+     var propertyInfo = viewModel.GetType().GetProperty(property.Name);
+     if (propertyInfo != null)
+     {
+        var updateFieldProperty = (IsNotUpdateFieldAttribute)propertyInfo.GetCustomAttributes(typeof(IsNotUpdateFieldAttribute), false).FirstOrDefault();
+        if (updateFieldProperty != null && updateFieldProperty.NotUpdateField) continue;
+     }
+     if (property.HasHeatRelatedAttribute() && relatedObjectRequesterAction != null)
+     {
+        command.LinkToExistent.Add(property.GetLinkEntryElementFromViewModel(viewModel));
+        command.LinkToExistent.Last().RelatedObjectId =
+        relatedObjectRequesterAction(
+        (string)property.GetValue(viewModel, null),
+        property.GetCustomAttribute<HEATRelatedFieldAttribute>()).Id;
+     }
+     else
+     {               
+        command.FieldValues.Add(property.GetFieldValueFromViewModel(viewModel));
+     }
+   }
+     return command;
+}
 \end{lstlisting}
 
 \section{Attributes}
