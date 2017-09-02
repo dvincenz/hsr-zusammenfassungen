@@ -1,7 +1,7 @@
 % /*
 %  * ----------------------------------------------------------------------------
 %  * "THE BEER-WARE LICENSE" (Revision 42):
-%  * <michi.wieland@hotmail.com> wrote this file. As long as you retain this notice you
+%  * <michi.wieland@hotmail.com> and Dumeni Vincenz wrote this file. As long as you retain this notice you
 %  * can do whatever you want with this stuff. If we meet some day, and you think
 %  * this stuff is worth it, you can buy me a beer in return. Michael Wieland
 %  * ----------------------------------------------------------------------------
@@ -25,9 +25,10 @@
 	\item Man unterscheidet zwischen Referenz- (Klassen) und Value Typen (Structs, Enum und primitive Datentypen)
 	\item Bei Referenztypen liegt die Referenz auf dem Stack und das eigentliche Objekt auf dem Heap.
 	\item Bei der Parameterübergabe bei Value wird eine Kopie angelegt. Bei Referenztypen wird einfach nur die Referenz auf dem Stack kopiert (nicht aber das Objekt!)
-	\item Für die Parameterübergabe by Reference ist das Keyword \lstinline|ref| notwendig
+		\item Strings, Arrays und Delegates sind Referenztypen. Es wird immer nur eine Referenz auf dem Stack gespeichert. Bei der Übergabe in Methoden wird nur die Referenz übergeben, nicht so bei Value Typen. Hier wird immer eine Kopie des Wertes übergeben, ausser die Übergabe findet mit dem Schlüsselwort \lstinline|ref| statt.
 	\item Ein \lstinline|out| Parameter verhält sich wie ein \lstinline|ref| Parameter, mit dem Unterschied, dass er nicht initialisiert sein muss.
-	\item Strings werden auf dem Heap als \lstinline|char| Arrays alloziert.
+	\item Strings, werden auf dem Heap als \lstinline|char| Arrays alloziert.
+
 \end{itemize}
 
 \begin{figure}[h!]
@@ -922,6 +923,21 @@ int[][] jaggedArray = new int[6][];
 jaggedArray[0] = new int[4] { 1, 2, 3, 4 }
 \end{lstlisting}
 
+Ablage von Arrays nach Jagged- Blockmatrizen-Prinzip:
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\linewidth]{images/matrizenarray}
+\caption{Blockmatrizen}
+\label{fig:Blockmatrizen}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\linewidth]{images/jaggedarray.png}
+\caption{Jacked}
+\label{fig:Jacked}
+\end{figure}
+
 \subsection{Indexer}
 Ein Indexer erlaubt einfachen Zugriff auf ein Array. Er wird mit dem Keyword \lstinline|this| erstellt.
 \begin{lstlisting}
@@ -1198,6 +1214,36 @@ public class Vector{
 		return new Vector(a.x + b.x, a.y + b.y);
 	}						
 }
+\end{lstlisting}
+
+
+
+\subsubsection{Methoden überschreiben}
+Methoden können in einer abgeleitete Klasse überschrieben werden. Dabei gilt folgende Ausfürhungsreienfolge je nach Instatierungvariante.
+\begin{lstlisting}
+class Vehicle { 
+ public virtual void WhoAreYou() { 
+   Console.WriteLine("Vehicle"); 
+ } 
+} 
+class Car : Vehicle { 
+  public override void WhoAreYou() { 
+    base.WhoAreYou(); Console.WriteLine("Car"); 
+  } 
+} 
+class SportCar : Car { 
+  public new void WhoAreYou() { 
+    base.WhoAreYou(); Console.WriteLine("SportCar"); 
+  } 
+}
+
+//weil ein Objekt von Car instanziert wird nur die Methode von Vehicle und Car aufgerufen.
+Car c1 = new SportCar(); 
+c1.WhoAreYou();
+//im gegensatz dazu wird bei c2 die Methode bei Vehicle, Car, und Sportcar aufgerufen
+SportCar c2 = new SportCar(); 
+c2.WhoAreYou();
+
 \end{lstlisting}
 
 \subsubsection{Partial Class}
