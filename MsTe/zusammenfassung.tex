@@ -51,7 +51,7 @@
 Func<int,Func<int,string>> curry = a => b => (a + b).ToString();
 \end{lstlisting}
 
-\subsection{Delegates, Events}
+\subsection{Delegates, Events} \label{sub:DelgateEventSummary}
 \begin{itemize}
 	\item Der erste Parameter ist bei EventHandler immer immer das \lstinline|this| Objekt!
 	\item In einem Event können mehrere Lamda/Funktionen registriert werden (+=)
@@ -484,7 +484,7 @@ Objekte werden in drei Generationen aufgeteilt: Zuerst werden die Objekte der 0t
 	\item Generation 2: Objekte die mehr als einen GC Durchlauf überlebt haben.
 \end{itemize}
 
-\subsubsection{Deterministic Finalization} Objekte sollten wenn nötig mit dem Interface \lstinline|IDisposable| und der \lstinline|void Dispose()| Methode finalisiert werden und nur wenn nötig mit einem Destruktor. Man spricht von Deterministic Finalization, wenn der Programmierer für die Freigabe der unmanaged Ressourcen zuständig ist und diese explizit über \lstinline|Dispose()| freigibt. Dazu muss die \lstinline|Dispose()| Methode überschrieben werden. Mit \lstinline|using| wird der Aufrufe von \lstinline|Dispose()| implizit sichergestellt. Deterministic Finalization sollte bei allen I/O Klassen verwendet werden.
+\subsubsection{Deterministic Finalization} Objekte sollten wenn nötig mit dem Interface \lstinline|IDisposable| und der \lstinline|void Dispose()| Methode finalisiert werden und nur wenn nötig mit einem Destruktor (da der Zeitpunkt vom Aufruf des Destruktors vom GC abhängig ist). Man spricht von Deterministic Finalization, wenn der Programmierer für die Freigabe der unmanaged Ressourcen zuständig ist und diese explizit über \lstinline|Dispose()| freigibt. Dazu muss die \lstinline|Dispose()| Methode überschrieben werden. Mit \lstinline|using| wird der Aufrufe von \lstinline|Dispose()| implizit sichergestellt. Deterministic Finalization sollte bei allen I/O Klassen verwendet werden.
 \begin{itemize}
 	\item Dateisystem Zugriffe
 	\item Netzwerk Kommunikation
@@ -497,7 +497,6 @@ public class DataAccess : IDisposable {
 	public DataAccess() { 
 		connection = new SqlConnection();
 	}
-	
 	~DataAccess() {
 		// backup
 		connection.Dispose(); 
@@ -1504,7 +1503,7 @@ Type t = typeof(Buffer<int>); // t.Name = Buffer[System.Int32]
 
 
 \section{Delegates}
-Ein Delegate ist ein eigener \textbf{Referenztyp} und wird daher grundsätzlich aussehalb von Klassen definiert. Jedes Delegate erbt von der Klasse \lstinline|MulticastDelegate|. Er bietet eine Vereinfachung von Interfaces. Delegates können als Ersatz für das Factory und Template Method Pattern verwendet werden. 
+Ein Delegate ist ein eigener \textbf{Referenztyp} und wird daher grundsätzlich aussehalb von Klassen definiert. Delegates müssen auf Methoden zeigen mit gleicher Signatur wie im Delegate definiert worden ist. Sprich Parameter und Rückgabewerte müssen übereinstimmen. Jedes Delegate erbt von der Klasse \lstinline|MulticastDelegate|. Er bietet eine Vereinfachung von Interfaces. Delegates können als Ersatz für das Factory und Template Method Pattern verwendet werden. 
 \begin{itemize}
 	\item Zuweisung: \lstinline|DelegateType myDelegate = obj.Method;|
 	\item Aufruf: \lstinline|object result = myDelegate(params);|
@@ -1525,6 +1524,10 @@ public delegate int Calculator(int a, int b) {
 
 int res = add(3,4); // 7
 \end{lstlisting}
+Da Parameter per Default als Value und nicht als Referenz übergeben werden, werden aneinander gekettete Methoden im Delegate immer wieder auf die 'Grundparamter' zurückgreifen. Möchte beispielsweise mit jeder zugewiesene Methode weiterführende Modifikationen an den Parameter durchgeführt werden (Beispielsweise 1. Buchstabe ersetzten  => 2. alles Capital Case schreiben) so könnten die Parameter einfach per \lstinline|ref| übergeben werden. (siehe auch \ref{sec:multicastDelegates}) 
+\begin{itemize}
+	\item Delegate mit Referenz Parameter: \lstinline| delegate stringManipulation(ref string s);|
+\end{itemize}
 
 \begin{figure}[h]
 	\centering
@@ -1535,7 +1538,7 @@ int res = add(3,4); // 7
 
 \clearpage
 
-\subsection{Multicast Delegates}
+\subsection{Multicast Delegates} \label{sec:multicastDelegates}
 Jedes Delegate ist auch ein Multicast Delegate. Im Unterschied zum normalen Delegate beinhaltet das Multicast Delegate mehrere Methoden. Weitere Methoden können mit += hizugefügt und mit -= wieder entfernt werden. Die Methode werden dann nacheinander aufgerufen. (Intern Linked List). Lamdas werden vom Compiler als Delegate abgebildet.
 \begin{lstlisting}
 // keyword delegate
@@ -1665,6 +1668,7 @@ public class Usage {
 	}
 }
 \end{lstlisting}
+Event Handling wird oft auch mit dem bereits vorgegebenen Delegate \lstinline|EventHandler| erstellt. Beispiel in Kapitel \ref{sub:DelgateEventSummary}
 
 \section{Lamdas}
 \begin{itemize}
